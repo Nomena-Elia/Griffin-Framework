@@ -40,12 +40,14 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     public void processRequest(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        String url = req.getRequestURL().toString();
-        try (PrintWriter out = res.getWriter()) {
-            for (String className : listControllers) {
+        // String url = req.getRequestURL().toString();
+        try (PrintWriter out = res.getWriter();) {
+            out.println(listControllers.size());
+            for(String className : listControllers) {
                 out.println(className);
             }
-            out.flush();
+        } catch(Exception e) {
+            throw new ServletException(e);
         }
     }
 }
