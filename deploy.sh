@@ -9,9 +9,9 @@ TEST_LIB="/home/nomena/Documents/S4/web dyn/griffin/Test/lib"
 
 find $SRC_DIR -name "*.java" > sources.txt
 javac -cp $SERVLET_API_JAR -d $BUILD_DIR/ @sources.txt
-rm sources.txt
+# rm sources.txt
 
-# Générer le fichier .jar dans le dossier build
+# Générer le fichier .jar dans le dossier bin
 cd $BUILD_DIR || exit
 jar -cvf $APP_NAME.jar *
 cd ..
