@@ -18,7 +18,7 @@ public class Utils {
         String path = ressource.getPath().replaceAll("%20", " ");
         // throw new Exception(path);
         File dir = new File(path);
-        if(dir.exists()) {
+        if(dir.exists() && dir.isDirectory()) {
             File[] files = dir.listFiles();
             for(File f : files) {
                 String fileName = f.getName();
