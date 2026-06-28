@@ -3,8 +3,12 @@ package griffin.mvc.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Map;
 
 import griffin.mvc.annotation.Controller;
+import griffin.mvc.exception.UrlNotFoundException;
+import griffin.mvc.utils.Mapping;
+import griffin.mvc.utils.UrlMethod;
 import griffin.mvc.utils.Utils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -16,7 +20,8 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class FrontControllerServlet extends HttpServlet {
 
-    private List<String> listControllers;
+    private List<Class<?>> listControllers;
+    private Map<UrlMethod, Mapping> urlMappings;
 
     @Override
     public void init() throws ServletException {
@@ -24,6 +29,7 @@ public class FrontControllerServlet extends HttpServlet {
         try {
             List<Class<?>> classes = Utils.scanPackage(packageName);
             listControllers = Utils.getAnnotatedClasses(classes, Controller.class);
+            urlMappings = Utils.getUrlMapping(listControllers);
         } catch (Exception e) {
             throw new ServletException(e);
         }
@@ -39,13 +45,26 @@ public class FrontControllerServlet extends HttpServlet {
         processRequest(req, res);
     }
 
+    /**
+     * @author <b>Nomena</b>
+     * @param req : The object representation of the request
+     * @param res : The object representation of the response
+     * @throws ServletException
+     * @throws IOException
+     */
+
     public void processRequest(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        // String url = req.getRequestURL().toString();
+        String uri = req.getPathInfo();
+        UrlMethod method = new UrlMethod();
+        method.setUrl(uri);
+        method.setMethod(req.getMethod());
+        Mapping m = urlMappings.get(method);
+        if(m == null) {
+            UrlNotFoundException ex = new UrlNotFoundException(urlMappings, method);
+            throw new ServletException(ex);
+        }
         try (PrintWriter out = res.getWriter();) {
-            out.println(listControllers.size());
-            for(String className : listControllers) {
-                out.println(className);
-            }
+            out.println(method + " -> Controller: " + m.getController().getName() + ", Method: " + m.getMethod().getName());
         } catch(Exception e) {
             throw new ServletException(e);
         }
