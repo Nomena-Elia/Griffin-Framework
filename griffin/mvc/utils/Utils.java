@@ -72,7 +72,7 @@ public class Utils {
                 UrlMethod method = new UrlMethod();
                 method.setUrl(url);
                 method.setMethod(annotation.method());
-                if(ret.keySet().contains(method)) {
+                if(ret.containsKey(method)) {
                     DuplicateUrlException ex = new DuplicateUrlException();
                     ex.setExisting(ret.get(method));
                     ex.setIntended(map);
@@ -84,4 +84,10 @@ public class Utils {
         }
         return ret;
     }
+
+    public static Object invokeMapping(Mapping mapping) throws Exception {
+        Object invoking = mapping.getController().getConstructor().newInstance();
+        return mapping.getMethod().invoke(invoking);
+    }
+
 }

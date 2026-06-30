@@ -2,6 +2,7 @@ package griffin.mvc.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -58,13 +59,16 @@ public class FrontControllerServlet extends HttpServlet {
         UrlMethod method = new UrlMethod();
         method.setUrl(uri);
         method.setMethod(req.getMethod());
-        Mapping m = urlMappings.get(method);
-        if(m == null) {
+        Mapping mapping = urlMappings.get(method);
+        if(mapping == null) {
             UrlNotFoundException ex = new UrlNotFoundException(urlMappings, method);
             throw new ServletException(ex);
         }
+        
         try (PrintWriter out = res.getWriter();) {
-            out.println(method + " -> Controller: " + m.getController().getName() + ", Method: " + m.getMethod().getName());
+            Object result = Utils.invokeMapping(mapping);
+            out.println(result);
+            System.out.println(result);
         } catch(Exception e) {
             throw new ServletException(e);
         }
