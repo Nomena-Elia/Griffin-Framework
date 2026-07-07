@@ -2,11 +2,9 @@ package griffin.mvc.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-import griffin.mvc.annotation.Controller;
 import griffin.mvc.exception.UrlNotFoundException;
 import griffin.mvc.utils.Mapping;
 import griffin.mvc.utils.UrlMethod;
@@ -21,19 +19,12 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class FrontControllerServlet extends HttpServlet {
 
-    private List<Class<?>> listControllers;
     private Map<UrlMethod, Mapping> urlMappings;
 
     @Override
+    @SuppressWarnings("unchecked")
     public void init() throws ServletException {
-        String packageName = this.getInitParameter("controllersPackage");
-        try {
-            List<Class<?>> classes = Utils.scanPackage(packageName);
-            listControllers = Utils.getAnnotatedClasses(classes, Controller.class);
-            urlMappings = Utils.getUrlMapping(listControllers);
-        } catch (Exception e) {
-            throw new ServletException(e);
-        }
+        urlMappings = (Map<UrlMethod, Mapping>) this.getServletContext().getAttribute("urlMappings");
     }
 
     @Override
