@@ -39,15 +39,29 @@ public class Utils {
         return ret;
     }
 
-    public static List<Class<?>> getAnnotatedClasses(List<Class<?>> classes, Class<? extends Annotation> annotation) throws Exception {
-        List<Class<?>> ret = new ArrayList<>();
+    public static void getUrlMapping(List<Class<?>> classes, Class<? extends Annotation> annotation, Map<UrlMethod, Mapping> urlMappings) throws Exception {
         for(Class<?> clazz : classes) {
             if(clazz.isAnnotationPresent(annotation)) {
-                ret.add(clazz);
+                List<Method> annotatedMethod = getAnnotatedMethod(clazz, UrlMapping.class);
+                for(Method m : annotatedMethod) {
+                    UrlMapping urlAnnotation = m.getAnnotation(UrlMapping.class);
+                    String url = urlAnnotation.url();
+                    Mapping map = new Mapping(clazz, m);
+                    UrlMethod method = new UrlMethod();
+                    method.setUrl(url);
+                    method.setMethod(urlAnnotation.method());
+                    if(urlMappings.containsKey(method)) {
+                        DuplicateUrlException ex = new DuplicateUrlException();
+                        ex.setExisting(urlMappings.get(method));
+                        ex.setIntended(map);
+                        ex.setUrl(method);
+                        throw ex;
+                    }
+                    urlMappings.put(method, map);
+                }
                 // throw new Exception("PRESENT");
             }
         }
-        return ret;
     }
 
     public static List<Method> getAnnotatedMethod(Class<?> clazz, Class<? extends Annotation> annotation) {
