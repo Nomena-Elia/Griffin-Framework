@@ -51,7 +51,7 @@ public class MyContextListener implements ServletContextListener {
         } catch (Exception e) {
             System.out.println("--------------------------------");
             System.out.println(e.getMessage());
-            System.out.println("--------------------------------");
+            System.out.println("---------------------------------");
             throw new RuntimeException(e);
         }
     }
