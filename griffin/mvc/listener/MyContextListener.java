@@ -4,7 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
 import griffin.mvc.annotation.Controller;
+import griffin.mvc.config.AppConfig;
 import griffin.mvc.utils.Mapping;
 import griffin.mvc.utils.UrlMethod;
 import griffin.mvc.utils.Utils;
@@ -38,6 +43,8 @@ public class MyContextListener implements ServletContextListener {
                 Map<UrlMethod, Mapping> urlMapping = new HashMap<>();
                 Utils.getUrlMapping(classes, Controller.class, urlMapping);
                 context.setAttribute("urlMappings", urlMapping);
+                ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
+                context.setAttribute("springContainer", ctx);
             } catch (Exception e) {
                 throw new ServletException(e);
             }
