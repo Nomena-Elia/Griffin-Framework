@@ -3,14 +3,20 @@ package griffin.mvc.utils;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
+
+import org.springframework.context.ApplicationContext;
 
 import griffin.mvc.annotation.UrlMapping;
 import griffin.mvc.exception.DuplicateUrlException;
+import jakarta.servlet.ServletContext;
 
 public class Utils {
     public static List<Class<?>> scanPackage(String packageName) throws Exception {
@@ -99,9 +105,26 @@ public class Utils {
         return ret;
     }
 
-    public static Object invokeMapping(Mapping mapping) throws Exception {
+    private static int findContextIndex(Class<?>[] parameterTypes) {
+        if(parameterTypes == null) {
+            return -1;
+        }
+        return IntStream.range(0, parameterTypes.length)
+        .filter(i -> parameterTypes[i] == ApplicationContext.class)
+        .findFirst()
+        .orElse(-1);
+    }
+
+    public static Object invokeMapping(Mapping mapping, ServletContext context) throws Exception {
+        Method method = mapping.getMethod();
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        int contextIndex = findContextIndex(parameterTypes);
+        Object[] parameters = new Object[parameterTypes.length];
+        if(contextIndex != -1) {
+            parameters[contextIndex] = context.getAttribute("springContainer");
+        }
         Object invoking = mapping.getController().getConstructor().newInstance();
-        return mapping.getMethod().invoke(invoking);
+        return mapping.getMethod().invoke(invoking, parameters);
     }
 
 }
