@@ -14,6 +14,10 @@ import java.util.stream.IntStream;
 
 import org.springframework.context.ApplicationContext;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 import griffin.mvc.annotation.UrlMapping;
 import griffin.mvc.exception.DuplicateUrlException;
 import jakarta.servlet.ServletContext;
@@ -125,6 +129,11 @@ public class Utils {
         }
         Object invoking = mapping.getController().getConstructor().newInstance();
         return mapping.getMethod().invoke(invoking, parameters);
+    }
+
+    public static String toJson(Object object) throws JsonProcessingException {
+        ObjectWriter ow = JsonResources.getObjectwriter();
+        return ow.writeValueAsString(object);
     }
 
 }
