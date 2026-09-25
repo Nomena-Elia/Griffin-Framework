@@ -3,9 +3,11 @@
 ./griffin/mvc/servlet/FrontControllerServlet.java
 ./griffin/mvc/utils/UrlMethod.java
 ./griffin/mvc/utils/Mapping.java
+./griffin/mvc/utils/JsonResources.java
 ./griffin/mvc/utils/Utils.java
 ./griffin/mvc/config/AppConfig.java
 ./griffin/mvc/listener/MyContextListener.java
+./griffin/mvc/annotation/WebApi.java
 ./griffin/mvc/annotation/Controller.java
 ./griffin/mvc/annotation/UrlMapping.java
 ./griffin/mvc/web/servlet/ModelAndView.java

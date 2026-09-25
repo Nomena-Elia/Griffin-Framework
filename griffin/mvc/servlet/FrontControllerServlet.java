@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
+import griffin.mvc.annotation.WebApi;
 import griffin.mvc.exception.UrlNotFoundException;
 import griffin.mvc.utils.Mapping;
 import griffin.mvc.utils.UrlMethod;
@@ -84,6 +85,15 @@ public class FrontControllerServlet extends HttpServlet {
                 return;
             }
             try(PrintWriter out = res.getWriter();) {
+                if(mapping.getMethod().isAnnotationPresent(WebApi.class)) {
+                    res.addHeader("Content-Type", "application/json");
+                    if(result != null && result.getClass().equals(String.class)) {
+                        out.println(result);
+                        return;
+                    }
+                    out.println(Utils.toJson(result));
+                    return;
+                }
                 out.println(result);
             }
         } catch(Exception e) {
