@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +15,12 @@ import java.util.stream.IntStream;
 import org.springframework.context.ApplicationContext;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 import griffin.mvc.annotation.UrlMapping;
 import griffin.mvc.exception.DuplicateUrlException;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class Utils {
     public static List<Class<?>> scanPackage(String packageName) throws Exception {
@@ -119,11 +119,28 @@ public class Utils {
         .orElse(-1);
     }
 
-    public static Object invokeMapping(Mapping mapping, ServletContext context) throws Exception {
+    private static void fillParameters(Parameter[] parameters, HttpServletRequest req, Object[] values) throws Exception {
+        Map<String, Object> assoc = new HashMap<>();
+        Enumeration<String> params = req.getParameterNames();
+        String param = null;
+        while(params.hasMoreElements()) {
+            param = params.nextElement();
+            assoc.put(param, req.getParameterValues(param));
+            // param = params.nextElement();
+        }
+        int i = 0;
+        for(Parameter p : parameters) {
+            values[i] = TypeConverter.convert(assoc.get(p.getName()), p.getType(), p.getParameterizedType());
+            i++;
+        }
+    }
+
+    public static Object invokeMapping(Mapping mapping, ServletContext context, HttpServletRequest req) throws Exception {
         Method method = mapping.getMethod();
         Class<?>[] parameterTypes = method.getParameterTypes();
         int contextIndex = findContextIndex(parameterTypes);
         Object[] parameters = new Object[parameterTypes.length];
+        fillParameters(method.getParameters(), req, parameters);
         if(contextIndex != -1) {
             parameters[contextIndex] = context.getAttribute("springContainer");
         }
