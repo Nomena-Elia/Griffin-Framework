@@ -5,11 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import griffin.mvc.annotation.Controller;
-import griffin.mvc.config.AppConfig;
 import griffin.mvc.utils.Mapping;
 import griffin.mvc.utils.UrlMethod;
 import griffin.mvc.utils.Utils;

@@ -2,7 +2,6 @@ package griffin.mvc.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 import java.util.Map;
 
 import griffin.mvc.annotation.WebApi;
@@ -71,7 +70,7 @@ public class FrontControllerServlet extends HttpServlet {
         }
         
         try {
-            Object result = Utils.invokeMapping(mapping,this.getServletContext());
+            Object result = Utils.invokeMapping(mapping,this.getServletContext(), req);
             if(result instanceof ModelAndView) {
                 ModelAndView castedResult = (ModelAndView) result;
                 String viewName = prefix + castedResult.getViewName() + suffix;
