@@ -1,8 +1,10 @@
 ./griffin/mvc/exception/DuplicateUrlException.java
 ./griffin/mvc/exception/UrlNotFoundException.java
 ./griffin/mvc/servlet/FrontControllerServlet.java
+./griffin/mvc/utils/BindingContext.java
 ./griffin/mvc/utils/UrlMethod.java
 ./griffin/mvc/utils/Mapping.java
+./griffin/mvc/utils/BindingTree.java
 ./griffin/mvc/utils/JsonResources.java
 ./griffin/mvc/utils/TypeConverter.java
 ./griffin/mvc/utils/Utils.java
