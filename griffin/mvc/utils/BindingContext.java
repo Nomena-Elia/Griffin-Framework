@@ -2,11 +2,16 @@ package griffin.mvc.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import griffin.mvc.utils.BindingTree.BindingNode;
+import griffin.mvc.utils.BindingUtils.PathInfo;
 
 public class BindingContext {
     // Une Map qui associe le nom de l'objet racine à son arbre de binding
@@ -44,42 +49,102 @@ public class BindingContext {
         }
     }
 
+    public String[] insertAt(String[] originalArray, String newValue, int index) {
+        if (index < 0 || index > originalArray.length) {
+            throw new IndexOutOfBoundsException("Index invalide : " + index);
+        }
+
+        List<String> list = new ArrayList<>(Arrays.asList(originalArray));
+
+        list.add(index, newValue);
+
+        return list.toArray(new String[0]);
+    }
+
+    public static boolean isNumeric(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        try {
+            Double.parseDouble(str); 
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
     private void insertPathInNode(BindingTree.BindingNode currentNode, String remainingPath, String[] value)
             throws NoSuchFieldException {
         String[] parts = remainingPath.split("\\.");
         Class<?> currentClass = currentNode.type;
-
-        for (int i = 0; i < parts.length; i++) {
+        int actualPart = parts.length;
+        for (int i = 0; i < actualPart; i++) {
             String part = parts[i];
             Class<?> fieldType = null;
+            Type genericType = null;
             Field found = null;
+            PathInfo pi = BindingUtils.parsePathSegment(part);
 
-            if (currentClass != null) {
+            int index = pi.index();
+            String name = pi.fieldName();
+            if (currentClass != null && !isNumeric(part)) {
                 try {
-                    found = currentClass.getDeclaredField(part);
+                    found = currentClass.getDeclaredField(name);
                     fieldType = found.getType();
+                    genericType = found.getGenericType();
                 } catch (NoSuchFieldException e) {
                     throw e;
                 }
             }
 
-            currentNode.children.putIfAbsent(part,
-                    new BindingTree.BindingNode(part, fieldType, found.getGenericType()));
-            currentNode = currentNode.children.get(part);
-
+            currentNode.children.putIfAbsent(name,
+                    new BindingTree.BindingNode(name, fieldType, genericType));
+            currentNode = currentNode.children.get(name);
+            if (pi.isList()) {
+                currentNode.list = true;
+                Class<?> listClass = null;
+                if (genericType instanceof ParameterizedType pt) {
+                    listClass = (Class<?>) pt.getActualTypeArguments()[0];
+                    // System.out.println("CLASS:" + listClass);
+                }
+                String indexStr = String.valueOf(index);
+                currentNode.children.putIfAbsent(indexStr, new BindingNode(indexStr, listClass, null));
+                currentNode = currentNode.children.get(indexStr);
+                currentClass = listClass;
+                // parts = insertAt(parts, indexStr, i + 1);
+                // actualPart++;
+            } else {
+                currentClass = fieldType;
+            }
             if (i == parts.length - 1) {
                 currentNode.value = value;
+                // System.out.println("FARANY: " + currentNode.propertyName + " = " + value);
             }
-            currentClass = fieldType;
         }
     }
 
     public Object instantiateTree(BindingNode node) throws Exception {
         if (node.children.isEmpty()) {
+            System.out.println("ETO> " + node.propertyName + " , " + node.type);
             return TypeConverter.convert(node.value, node.type, node.genericType);
         }
-        Object instance = node.type.getDeclaredConstructor().newInstance();
+        Object instance = null;
+        List<Object> list = null;
+        if (node.list) {
+            list = new ArrayList<>();
+            instance = list;
+        } else {
+            instance = node.type.getDeclaredConstructor().newInstance();
+        }
         for (BindingNode child : node.children.values()) {
+            if (node.list) {
+                int targetIdx = Integer.parseInt(child.propertyName);
+                while(list.size() <= targetIdx) {
+                    list.add(null);
+                }
+                list.set(targetIdx ,instantiateTree(child));
+                continue;
+            }
             Object childValue = instantiateTree(child);
             Field field = node.type.getDeclaredField(child.propertyName);
             String propertyName = child.propertyName;

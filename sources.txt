@@ -5,6 +5,7 @@
 ./griffin/mvc/utils/UrlMethod.java
 ./griffin/mvc/utils/Mapping.java
 ./griffin/mvc/utils/BindingTree.java
+./griffin/mvc/utils/BindingUtils.java
 ./griffin/mvc/utils/JsonResources.java
 ./griffin/mvc/utils/TypeConverter.java
 ./griffin/mvc/utils/Utils.java

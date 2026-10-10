@@ -145,6 +145,7 @@ public class Utils {
             String param = params.nextElement();
             ctx.insertFormValue(param, req.getParameterValues(param));
         }
+        // System.out.println(ctx.getRoots());
         Map<String, Object> result = ctx.instantiateAll();
         for(int i = 0; i < parameters.length; i++) {
             values[i] = result.getOrDefault(parameters[i].getName(), null);
@@ -156,7 +157,7 @@ public class Utils {
         Class<?>[] parameterTypes = method.getParameterTypes();
         int contextIndex = findContextIndex(parameterTypes);
         Object[] parameters = new Object[parameterTypes.length];
-        fillParameters(method.getParameters(), req, parameters);
+        // fillParameters(method.getParameters(), req, parameters);
         fillParametersObject(method.getParameters(), req, parameters);
         if(contextIndex != -1) {
             parameters[contextIndex] = context.getAttribute("springContainer");
