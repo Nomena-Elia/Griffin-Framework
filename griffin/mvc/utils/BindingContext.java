@@ -34,13 +34,26 @@ public class BindingContext {
     public void insertFormValue(String fullPath, String[] value) throws NoSuchFieldException {
         String[] parts = fullPath.split("\\.", 2);
         String rootName = parts[0];
+        PathInfo pi = BindingUtils.parsePathSegment(rootName);
+        String name = pi.fieldName();
 
-        if (!roots.containsKey(rootName)) {
-            Class<?> rootClass = rootTypes.get(rootName);
-            roots.put(rootName, new BindingTree.BindingNode(rootName, rootClass, rootGenericType.get(rootName)));
+        Class<?> rootClass = rootTypes.get(name);
+        roots.putIfAbsent(name, new BindingTree.BindingNode(name, rootClass, rootGenericType.get(name)));
+
+        BindingNode rootNode = roots.get(name);
+
+        if (pi.isList()) {
+            rootNode.list = true;
+            Class<?> listClass = null;
+            Type genericType = rootGenericType.get(name);
+            if (genericType instanceof ParameterizedType pt) {
+                listClass = (Class<?>) pt.getActualTypeArguments()[0];
+                // System.out.println("CLASS:" + listClass);
+            }
+            String idx = String.valueOf(pi.index());
+            rootNode.children.putIfAbsent(idx, new BindingNode(idx, listClass, null));
+            rootNode = rootNode.children.get(idx);
         }
-
-        BindingTree.BindingNode rootNode = roots.get(rootName);
 
         if (parts.length > 1) {
             insertPathInNode(rootNode, parts[1], value);
@@ -66,7 +79,7 @@ public class BindingContext {
             return false;
         }
         try {
-            Double.parseDouble(str); 
+            Double.parseDouble(str);
             return true;
         } catch (NumberFormatException e) {
             return false;
@@ -139,10 +152,10 @@ public class BindingContext {
         for (BindingNode child : node.children.values()) {
             if (node.list) {
                 int targetIdx = Integer.parseInt(child.propertyName);
-                while(list.size() <= targetIdx) {
+                while (list.size() <= targetIdx) {
                     list.add(null);
                 }
-                list.set(targetIdx ,instantiateTree(child));
+                list.set(targetIdx, instantiateTree(child));
                 continue;
             }
             Object childValue = instantiateTree(child);
