@@ -38,6 +38,9 @@ public class BindingContext {
         String name = pi.fieldName();
 
         Class<?> rootClass = rootTypes.get(name);
+        if(rootClass == null) {
+            return;
+        } 
         roots.putIfAbsent(name, new BindingTree.BindingNode(name, rootClass, rootGenericType.get(name)));
 
         BindingNode rootNode = roots.get(name);
