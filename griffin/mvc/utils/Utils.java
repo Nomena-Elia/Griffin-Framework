@@ -125,7 +125,7 @@ public class Utils {
         String param = null;
         while(params.hasMoreElements()) {
             param = params.nextElement();
-            assoc.put(param, req.getParameterValues(param));
+            assoc.putIfAbsent(param, req.getParameterValues(param));
             // param = params.nextElement();
         }
         int i = 0;
@@ -135,12 +135,30 @@ public class Utils {
         }
     }
 
+    private static void fillParametersObject(Parameter[] parameters, HttpServletRequest req, Object[] values) throws Exception {
+        Enumeration<String> params = req.getParameterNames();
+        BindingContext ctx = new BindingContext();
+        for(Parameter p : parameters) {
+            ctx.registerRootType(p.getName(), p.getType(), p.getParameterizedType());   
+        }
+        while(params.hasMoreElements()) {
+            String param = params.nextElement();
+            ctx.insertFormValue(param, req.getParameterValues(param));
+        }
+        // System.out.println(ctx.getRoots());
+        Map<String, Object> result = ctx.instantiateAll();
+        for(int i = 0; i < parameters.length; i++) {
+            values[i] = result.getOrDefault(parameters[i].getName(), null);
+        }
+    }
+
     public static Object invokeMapping(Mapping mapping, ServletContext context, HttpServletRequest req) throws Exception {
         Method method = mapping.getMethod();
         Class<?>[] parameterTypes = method.getParameterTypes();
         int contextIndex = findContextIndex(parameterTypes);
         Object[] parameters = new Object[parameterTypes.length];
-        fillParameters(method.getParameters(), req, parameters);
+        // fillParameters(method.getParameters(), req, parameters);
+        fillParametersObject(method.getParameters(), req, parameters);
         if(contextIndex != -1) {
             parameters[contextIndex] = context.getAttribute("springContainer");
         }
