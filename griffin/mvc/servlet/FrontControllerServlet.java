@@ -12,6 +12,7 @@ import griffin.mvc.utils.Utils;
 import griffin.mvc.web.servlet.ModelAndView;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * @author Nomena
  */
+@MultipartConfig
 public class FrontControllerServlet extends HttpServlet {
 
     private Map<UrlMethod, Mapping> urlMappings;
@@ -52,11 +54,11 @@ public class FrontControllerServlet extends HttpServlet {
      */
 
     public void processRequest(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        if(urlMappings == null) {
+        if (urlMappings == null) {
             throw new ServletException("NULL");
         }
         String uri = req.getPathInfo();
-        if(uri != null && uri.startsWith("/WEB-INF")) {
+        if (uri != null && uri.startsWith("/WEB-INF")) {
             req.getServletContext().getNamedDispatcher("jsp").forward(req, res);
             return;
         }
@@ -64,29 +66,29 @@ public class FrontControllerServlet extends HttpServlet {
         method.setUrl(uri);
         method.setMethod(req.getMethod());
         Mapping mapping = urlMappings.get(method);
-        if(mapping == null) {
+        if (mapping == null) {
             UrlNotFoundException ex = new UrlNotFoundException(urlMappings, method);
             throw new ServletException(ex);
         }
-        
+
         try {
-            Object result = Utils.invokeMapping(mapping,this.getServletContext(), req);
-            if(result instanceof ModelAndView) {
+            Object result = Utils.invokeMapping(mapping, this.getServletContext(), req);
+            if (result instanceof ModelAndView) {
                 ModelAndView castedResult = (ModelAndView) result;
                 String viewName = prefix + castedResult.getViewName() + suffix;
                 // out.println(viewName);
                 RequestDispatcher dis = req.getRequestDispatcher(viewName);
-                for(Map.Entry<String, Object> entry : castedResult.getAttributes().entrySet()) {
+                for (Map.Entry<String, Object> entry : castedResult.getAttributes().entrySet()) {
                     req.setAttribute(entry.getKey(), entry.getValue());
                 }
                 // out.println(dis);
                 dis.forward(req, res);
                 return;
             }
-            try(PrintWriter out = res.getWriter();) {
-                if(mapping.getMethod().isAnnotationPresent(WebApi.class)) {
+            try (PrintWriter out = res.getWriter();) {
+                if (mapping.getMethod().isAnnotationPresent(WebApi.class)) {
                     res.addHeader("Content-Type", "application/json");
-                    if(result != null && result.getClass().equals(String.class)) {
+                    if (result != null && result.getClass().equals(String.class)) {
                         out.println(result);
                         return;
                     }
@@ -95,7 +97,7 @@ public class FrontControllerServlet extends HttpServlet {
                 }
                 out.println(result);
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new ServletException(e);
         }
     }

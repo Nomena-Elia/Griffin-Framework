@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,10 @@ public class TypeConverter {
         String[] values = toStringArray(rawValue);
         Class<?> componentType = targetType.getComponentType();
         Object array = Array.newInstance(componentType, values.length);
+
+        if(componentType.equals(byte.class)) {
+            return Base64.getDecoder().decode(values[0]);
+        }
 
         for (int i = 0; i < values.length; i++) {
             Array.set(array, i, ScalarConverter.convertScalar(values[i], componentType));

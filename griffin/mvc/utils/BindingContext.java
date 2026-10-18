@@ -38,9 +38,9 @@ public class BindingContext {
         String name = pi.fieldName();
 
         Class<?> rootClass = rootTypes.get(name);
-        if(rootClass == null) {
+        if (rootClass == null) {
             return;
-        } 
+        }
         roots.putIfAbsent(name, new BindingTree.BindingNode(name, rootClass, rootGenericType.get(name)));
 
         BindingNode rootNode = roots.get(name);
@@ -93,6 +93,9 @@ public class BindingContext {
             throws NoSuchFieldException {
         String[] parts = remainingPath.split("\\.");
         Class<?> currentClass = currentNode.type;
+        // if(currentClass == null) {
+        //     return;
+        // }
         int actualPart = parts.length;
         for (int i = 0; i < actualPart; i++) {
             String part = parts[i];
@@ -146,9 +149,12 @@ public class BindingContext {
         }
         Object instance = null;
         List<Object> list = null;
+        Map<String, Object> map = null;
         if (node.list) {
             list = new ArrayList<>();
             instance = list;
+        } else if (node.isMap()) {
+            map = new HashMap<>();
         } else {
             instance = node.type.getDeclaredConstructor().newInstance();
         }
@@ -159,6 +165,11 @@ public class BindingContext {
                     list.add(null);
                 }
                 list.set(targetIdx, instantiateTree(child));
+                continue;
+            }
+            if (node.map) {
+                String key = child.propertyName;
+                map.put(key, instantiateTree(child));
                 continue;
             }
             Object childValue = instantiateTree(child);

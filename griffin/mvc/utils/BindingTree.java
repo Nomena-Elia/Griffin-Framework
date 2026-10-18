@@ -16,6 +16,15 @@ public class BindingTree {
         Class<?> type;
         Type genericType;
         boolean list = false;
+        boolean map = false;
+        public boolean isMap() {
+            return map;
+        }
+
+        public void setMap(boolean map) {
+            this.map = map;
+        }
+
         Map<String, BindingNode> children = new HashMap<>();
 
         BindingNode(String propertyName) {
