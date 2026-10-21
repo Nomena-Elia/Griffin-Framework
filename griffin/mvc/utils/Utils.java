@@ -25,8 +25,11 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 import griffin.mvc.annotation.UrlMapping;
 import griffin.mvc.exception.DuplicateUrlException;
+import griffin.mvc.helper.GriffinSessionHelper;
+import griffin.mvc.web.servlet.GriffinSession;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
 public class Utils {
@@ -117,12 +120,12 @@ public class Utils {
         return ret;
     }
 
-    private static int findContextIndex(Class<?>[] parameterTypes) {
+    private static int findSpecificArgIndex(Class<?>[] parameterTypes, Class<?> clazz) {
         if (parameterTypes == null) {
             return -1;
         }
         return IntStream.range(0, parameterTypes.length)
-                .filter(i -> parameterTypes[i] == ApplicationContext.class)
+                .filter(i -> parameterTypes[i].equals(clazz))
                 .findFirst()
                 .orElse(-1);
     }
@@ -161,7 +164,7 @@ public class Utils {
             Map<String, Integer> indexes = new HashMap<>();
             Map<String, Boolean> multiples = new HashMap<>();
             for (Part p : parts) {
-                if (p.getSubmittedFileName() != null) {
+                if (p.getSubmittedFileName() != null && !p.getSubmittedFileName().isEmpty()) {
                     String inputName = p.getName();
                     if (!inputs.contains(inputName)) {
                         for (Parameter para : parameters) {
@@ -237,15 +240,34 @@ public class Utils {
             throws Exception {
         Method method = mapping.getMethod();
         Class<?>[] parameterTypes = method.getParameterTypes();
-        int contextIndex = findContextIndex(parameterTypes);
+        int contextIndex = findSpecificArgIndex(parameterTypes, ApplicationContext.class);
+        int sessionIndex = findSpecificArgIndex(parameterTypes, GriffinSession.class);
         Object[] parameters = new Object[parameterTypes.length];
         // fillParameters(method.getParameters(), req, parameters);
         fillParametersObject(method.getParameters(), req, parameters);
         if (contextIndex != -1) {
             parameters[contextIndex] = context.getAttribute("springContainer");
         }
+        GriffinSession session = null;
+        HttpSession httpSession = null;
+        if(sessionIndex != -1) {
+            httpSession = req.getSession(true);
+            // COMMENTAIRE ETOADASD 
+            Map<String, GriffinSession> sessions = (Map<String, GriffinSession>) context.getAttribute("sessions");
+            session = sessions.get(httpSession.getId());
+            if(session == null) {
+                session = new GriffinSession();
+                sessions.put(httpSession.getId(), session);
+            }
+            GriffinSessionHelper.fillWithSession(session, httpSession);
+            parameters[sessionIndex] = session;
+        }
         Object invoking = mapping.getController().getConstructor().newInstance();
-        return mapping.getMethod().invoke(invoking, parameters);
+        Object ret = mapping.getMethod().invoke(invoking, parameters);
+        if(session != null) {
+            GriffinSessionHelper.overrideHttpSession(session, httpSession);
+        }
+        return ret;
     }
 
     public static String toJson(Object object) throws JsonProcessingException {

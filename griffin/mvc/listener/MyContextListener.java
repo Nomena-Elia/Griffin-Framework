@@ -12,6 +12,7 @@ import griffin.mvc.config.AppProperties;
 import griffin.mvc.utils.Mapping;
 import griffin.mvc.utils.UrlMethod;
 import griffin.mvc.utils.Utils;
+import griffin.mvc.web.servlet.GriffinSession;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -45,6 +46,8 @@ public class MyContextListener implements ServletContextListener {
                 context.setAttribute("urlMappings", urlMapping);
                 ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
                 context.setAttribute("springContainer", ctx);
+                Map<String, GriffinSession> sessions = new HashMap<>();
+                context.setAttribute("sessions", sessions);
             } catch (Exception e) {
                 throw new ServletException(e);
             }
