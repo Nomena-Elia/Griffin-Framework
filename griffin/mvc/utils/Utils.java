@@ -251,12 +251,13 @@ public class Utils {
         GriffinSession session = null;
         HttpSession httpSession = null;
         if(sessionIndex != -1) {
-            httpSession = req.getSession(false);
+            httpSession = req.getSession(true);
             // COMMENTAIRE ETOADASD 
-            session = (GriffinSession) context.getAttribute(httpSession.getId());
+            Map<String, GriffinSession> sessions = (Map<String, GriffinSession>) context.getAttribute("sessions");
+            session = sessions.get(httpSession.getId());
             if(session == null) {
                 session = new GriffinSession();
-                context.setAttribute(httpSession.getId(), session);
+                sessions.put(httpSession.getId(), session);
             }
             GriffinSessionHelper.fillWithSession(session, httpSession);
             parameters[sessionIndex] = session;
