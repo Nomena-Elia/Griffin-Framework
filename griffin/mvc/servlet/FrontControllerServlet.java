@@ -54,6 +54,7 @@ public class FrontControllerServlet extends HttpServlet {
      */
 
     public void processRequest(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        // this.getServletContext().setAttribute(req.getSession(false).getId(), res);
         if (urlMappings == null) {
             throw new ServletException("NULL");
         }
