@@ -164,7 +164,7 @@ public class Utils {
             Map<String, Integer> indexes = new HashMap<>();
             Map<String, Boolean> multiples = new HashMap<>();
             for (Part p : parts) {
-                if (p.getSubmittedFileName() != null) {
+                if (p.getSubmittedFileName() != null && !p.getSubmittedFileName().isEmpty()) {
                     String inputName = p.getName();
                     if (!inputs.contains(inputName)) {
                         for (Parameter para : parameters) {
