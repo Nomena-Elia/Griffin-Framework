@@ -6,6 +6,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.URL;
+import java.net.http.HttpRequest;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -23,11 +24,14 @@ import org.springframework.context.ApplicationContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import griffin.mvc.annotation.Auth;
 import griffin.mvc.annotation.UrlMapping;
+import griffin.mvc.exception.AuthRequiredException;
 import griffin.mvc.exception.DuplicateUrlException;
 import griffin.mvc.helper.GriffinSessionHelper;
 import griffin.mvc.web.servlet.GriffinSession;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.UnavailableException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
@@ -236,9 +240,32 @@ public class Utils {
         }
     }
 
+    private static void checkAuth(HttpServletRequest req, ServletContext context)
+            throws AuthRequiredException, UnavailableException {
+        Map<String, GriffinSession> sessions = (Map<String, GriffinSession>) context.getAttribute("sessions");
+        HttpSession httpSession = req.getSession(false);
+        GriffinSession session = sessions.get(httpSession.getId());
+        if (session == null) {
+            throw new AuthRequiredException();
+        }
+        String sessionVar = context.getInitParameter("sessionAuth");
+        if (sessionVar == null) {
+            throw new UnavailableException(
+                    "The session variable has not been declared in the web.xml. Please declare the sessionAuth variable to use authentification check.");
+        }
+        if(session.get(sessionVar) == null) {
+            throw new AuthRequiredException();
+        }
+    }
+
     public static Object invokeMapping(Mapping mapping, ServletContext context, HttpServletRequest req)
             throws Exception {
+        HttpSession httpSession = null;
+        httpSession = req.getSession(true);
         Method method = mapping.getMethod();
+        if(method.isAnnotationPresent(Auth.class)) {
+            checkAuth(req, context);
+        }
         Class<?>[] parameterTypes = method.getParameterTypes();
         int contextIndex = findSpecificArgIndex(parameterTypes, ApplicationContext.class);
         int sessionIndex = findSpecificArgIndex(parameterTypes, GriffinSession.class);
@@ -249,13 +276,11 @@ public class Utils {
             parameters[contextIndex] = context.getAttribute("springContainer");
         }
         GriffinSession session = null;
-        HttpSession httpSession = null;
-        if(sessionIndex != -1) {
-            httpSession = req.getSession(true);
-            // COMMENTAIRE ETOADASD 
+        if (sessionIndex != -1) {
+            // COMMENTAIRE ETOADASD
             Map<String, GriffinSession> sessions = (Map<String, GriffinSession>) context.getAttribute("sessions");
             session = sessions.get(httpSession.getId());
-            if(session == null) {
+            if (session == null) {
                 session = new GriffinSession();
                 sessions.put(httpSession.getId(), session);
             }
@@ -264,7 +289,7 @@ public class Utils {
         }
         Object invoking = mapping.getController().getConstructor().newInstance();
         Object ret = mapping.getMethod().invoke(invoking, parameters);
-        if(session != null) {
+        if (session != null) {
             GriffinSessionHelper.overrideHttpSession(session, httpSession);
         }
         return ret;

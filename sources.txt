@@ -1,5 +1,6 @@
 ./griffin/mvc/exception/DuplicateUrlException.java
 ./griffin/mvc/exception/UrlNotFoundException.java
+./griffin/mvc/exception/AuthRequiredException.java
 ./griffin/mvc/servlet/FrontControllerServlet.java
 ./griffin/mvc/utils/BindingContext.java
 ./griffin/mvc/utils/UrlMethod.java
@@ -13,6 +14,7 @@
 ./griffin/mvc/config/AppProperties.java
 ./griffin/mvc/listener/MyContextListener.java
 ./griffin/mvc/annotation/WebApi.java
+./griffin/mvc/annotation/Auth.java
 ./griffin/mvc/annotation/Controller.java
 ./griffin/mvc/annotation/UrlMapping.java
 ./griffin/mvc/web/servlet/ModelAndView.java
