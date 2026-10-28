@@ -1,5 +1,6 @@
 ./griffin/mvc/exception/DuplicateUrlException.java
 ./griffin/mvc/exception/UrlNotFoundException.java
+./griffin/mvc/exception/NotAuthorizedException.java
 ./griffin/mvc/exception/AuthRequiredException.java
 ./griffin/mvc/servlet/FrontControllerServlet.java
 ./griffin/mvc/utils/BindingContext.java

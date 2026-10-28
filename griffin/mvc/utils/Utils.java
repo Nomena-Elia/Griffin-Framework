@@ -8,6 +8,7 @@ import java.lang.reflect.Parameter;
 import java.net.URL;
 import java.net.http.HttpRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import griffin.mvc.annotation.Auth;
 import griffin.mvc.annotation.UrlMapping;
 import griffin.mvc.exception.AuthRequiredException;
 import griffin.mvc.exception.DuplicateUrlException;
+import griffin.mvc.exception.NotAuthorizedException;
 import griffin.mvc.helper.GriffinSessionHelper;
 import griffin.mvc.web.servlet.GriffinSession;
 import jakarta.servlet.ServletContext;
@@ -214,6 +216,10 @@ public class Utils {
                     temp.put(iBytes, new String[] { b64 });
                     temp.put(iBytes2, new String[] { b64 });
                     // index++;
+                } else {
+                    if(!paramsList.contains(p.getName())) {
+                        paramsList.add(p.getName());
+                    }
                 }
             }
 
@@ -240,10 +246,10 @@ public class Utils {
         }
     }
 
-    private static void checkAuth(HttpServletRequest req, ServletContext context)
+    private static void checkAuth(HttpSession httpSession, ServletContext context)
             throws AuthRequiredException, UnavailableException {
         Map<String, GriffinSession> sessions = (Map<String, GriffinSession>) context.getAttribute("sessions");
-        HttpSession httpSession = req.getSession(false);
+        // HttpSession httpSession = req.getSession(false);
         GriffinSession session = sessions.get(httpSession.getId());
         if (session == null) {
             throw new AuthRequiredException();
@@ -258,13 +264,32 @@ public class Utils {
         }
     }
 
+    private static void checkRole(HttpSession httpSession, ServletContext context, Auth annotation) throws UnavailableException, NotAuthorizedException {
+        Map<String, GriffinSession> sessions = (Map<String, GriffinSession>) context.getAttribute("sessions");
+        // HttpSession httpSession = req.getSession(false);
+        GriffinSession session = sessions.get(httpSession.getId());
+        String sessionVar = context.getInitParameter("sessionRole");
+        String[] values = annotation.value();
+        if(values != null && values.length > 0) {
+            if(sessionVar == null) {
+                throw new UnavailableException(
+                    "The role variable has not been declared in the web.xml. Please declare the sessionRole variable to use role check.");
+            }
+            String role = (String) session.get(sessionVar);
+            if(!Arrays.asList(values).contains(role)) {
+                throw new NotAuthorizedException();
+            }
+        }
+    }
+
     public static Object invokeMapping(Mapping mapping, ServletContext context, HttpServletRequest req)
             throws Exception {
         HttpSession httpSession = null;
         httpSession = req.getSession(true);
         Method method = mapping.getMethod();
         if(method.isAnnotationPresent(Auth.class)) {
-            checkAuth(req, context);
+            checkAuth(httpSession, context);
+            checkRole(httpSession, context, method.getAnnotation(Auth.class));
         }
         Class<?>[] parameterTypes = method.getParameterTypes();
         int contextIndex = findSpecificArgIndex(parameterTypes, ApplicationContext.class);
