@@ -66,9 +66,11 @@ public class Utils {
     }
 
     public static void getUrlMapping(List<Class<?>> classes, Class<? extends Annotation> annotation,
-            Map<UrlMethod, Mapping> urlMappings) throws Exception {
+            Map<UrlMethod, Mapping> urlMappings, Map<String, Object> controllerInstances) throws Exception {
         for (Class<?> clazz : classes) {
             if (clazz.isAnnotationPresent(annotation)) {
+                Object instance = clazz.getConstructor().newInstance();
+                controllerInstances.putIfAbsent(clazz.getName(), instance);
                 List<Method> annotatedMethod = getAnnotatedMethod(clazz, UrlMapping.class);
                 for (Method m : annotatedMethod) {
                     UrlMapping urlAnnotation = m.getAnnotation(UrlMapping.class);
@@ -312,7 +314,8 @@ public class Utils {
             GriffinSessionHelper.fillWithSession(session, httpSession);
             parameters[sessionIndex] = session;
         }
-        Object invoking = mapping.getController().getConstructor().newInstance();
+        Map<String, Object> controllers = (Map<String, Object>) context.getAttribute("controllerInstances");
+        Object invoking = controllers.get(mapping.getController().getName());
         Object ret = mapping.getMethod().invoke(invoking, parameters);
         if (session != null) {
             GriffinSessionHelper.overrideHttpSession(session, httpSession);
