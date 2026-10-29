@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import griffin.mvc.annotation.Controller;
+import griffin.mvc.annotation.UrlMapping;
 import griffin.mvc.config.AppProperties;
 import griffin.mvc.utils.Mapping;
 import griffin.mvc.utils.UrlMethod;
@@ -40,14 +41,16 @@ public class MyContextListener implements ServletContextListener {
         try {
             try {
                 AppProperties.loadProperties();
+                Map<String, Object> controllerInstances = new HashMap<>();
                 List<Class<?>> classes = Utils.scanPackage(packageName);
                 Map<UrlMethod, Mapping> urlMapping = new HashMap<>();
-                Utils.getUrlMapping(classes, Controller.class, urlMapping);
+                Utils.getUrlMapping(classes, Controller.class, urlMapping, controllerInstances);
                 context.setAttribute("urlMappings", urlMapping);
                 ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
                 context.setAttribute("springContainer", ctx);
                 Map<String, GriffinSession> sessions = new HashMap<>();
                 context.setAttribute("sessions", sessions);
+                context.setAttribute("controllerInstances", controllerInstances);
             } catch (Exception e) {
                 throw new ServletException(e);
             }
